@@ -42,7 +42,7 @@ wheelCommandType parse(const std::string &s)
                 }
                 else if(s == "s")
                 {
-                    ret.wheel = BOTH;
+                    ret.wheel = NONE;
                 }
                 else
                 {
@@ -51,7 +51,7 @@ wheelCommandType parse(const std::string &s)
                 break;
 
             case 1:
-                 ret.speed = std::stoi(s);
+                 ret.speed = atoi(s.c_str());
                 break;
 
             default:

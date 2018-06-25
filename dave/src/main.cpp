@@ -19,7 +19,7 @@ SoftwareSerial9 RightWheelSerial(9, 11);
 Wheel LeftWheel(&LeftWheelSerial, 31847, false);
 Wheel RightWheel(&RightWheelSerial, 31847, false);
 
-String inString = "";
+std::string inString = "";
 unsigned int delayUs = 200;
 
 void setup()
@@ -34,15 +34,21 @@ bool HandleCommand(wheelCommandType cmd)
     {
         if(cmd.wheel == LEFT)
         {
-            std::cout << "Left: " << cmd.speed << std::endl;
+            LeftWheel.SetSpeed(cmd.speed);
         }
         else if(cmd.wheel == RIGHT)
         {
-            std::cout << "Right: " << cmd.speed << std::endl;
+            RightWheel.SetSpeed(cmd.speed);
         }
         else if(cmd.wheel == BOTH)
         {
-            std::cout << "Both: " << cmd.speed << std::endl;
+            RightWheel.SetSpeed(cmd.speed);
+            LeftWheel.SetSpeed(cmd.speed);
+        }
+        else if(cmd.wheel == NONE)
+        {
+            RightWheel.SetSpeed(0);
+            LeftWheel.SetSpeed(0);
         }
     }
     return cmd.valid;
@@ -62,14 +68,10 @@ void loop()
         }
         else
         {
-            // TODO handle input with cmdparser
+            HandleCommand(parse(inString));
             inString = "";
-            received_byte = 0;
         }
 
     }
-
     delayMicroseconds(delayUs);
-    RightWheel.SetSpeed(spWhl);
-    LeftWheel.SetSpeed(spWhr);
 }
