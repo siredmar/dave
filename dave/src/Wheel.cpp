@@ -1,7 +1,7 @@
-
+#include <Arduino.h>
 #include "Wheel.h"
 
-Wheel::Wheel(SoftwareSerial9 *serial, uint32_t Baud, bool inv)
+Wheel::Wheel(SoftwareSerial9 *serial, uint32_t Baud, bool inv, int directionPin)
 {
     mySerial = serial;
     Baudrate = Baud;
@@ -14,6 +14,7 @@ Wheel::Wheel(SoftwareSerial9 *serial, uint32_t Baud, bool inv)
         inverted = 1;
     }
     mySerial->begin(Baudrate);
+    this->directionPin = directionPin;
 }
 
 Wheel::~Wheel(){ }
@@ -29,15 +30,15 @@ void Wheel::Stop()
     SetSpeed(0);
 }
 
-void Wheel::IncreaseSpeed()
+void Wheel::IncreaseSpeed(int delta)
 {
-    currentSpeed += SpeedDelta;
+    currentSpeed += delta;
     SetSpeed(currentSpeed);
 }
 
-void Wheel::DecreaseSpeed()
+void Wheel::DecreaseSpeed(int delta)
 {
-    currentSpeed -= SpeedDelta;
+    currentSpeed -= delta;
     SetSpeed(currentSpeed);
 }
 
@@ -52,4 +53,37 @@ void Wheel::SendSpeedOverUart(int16_t sp)
     mySerial->write9(85);
     mySerial->write9(82);
     mySerial->write9(82);
+}
+
+int Wheel::GetRpm()
+{
+    return currentRpm;
+}
+
+void Wheel::RisingIsr()
+{
+    timeOld = micros();
+    if(digitalRead(directionPin))
+    {
+        direction = FORWARD;
+    }
+    else
+    {
+        direction = BACKWARD;
+    }
+}
+
+void Wheel::FallingIsr()
+{
+    pulsewidth = micros() - timeOld;
+}
+
+int Wheel::CalculateRpm()
+{
+    currentRpm = pulsewidth;
+    if(direction == BACKWARD)
+    {
+        currentRpm *= -1;
+    }
+    return currentRpm;
 }

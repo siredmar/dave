@@ -15,23 +15,58 @@ the GPL2 ("Copyleft").
 #include "Wheel.h"
 #include "cmdparser.h"
 
-SoftwareSerial9 LeftWheelSerial(8, 10);
+int RightWheelInterruptPin = 1;
+int RightWheelDirectionPin = 2;
+int LeftWheelInterruptPin = 3;
+int LeftWheelDirectionPin = 4;
+
 SoftwareSerial9 RightWheelSerial(9, 11);
-Wheel LeftWheel(&LeftWheelSerial, 31847, false);
-Wheel RightWheel(&RightWheelSerial, 31847, false);
+SoftwareSerial9 LeftWheelSerial(8, 10);
+Wheel RightWheel(&RightWheelSerial, 31847, false, RightWheelDirectionPin);
+Wheel LeftWheel(&LeftWheelSerial, 31847, false, LeftWheelDirectionPin);
 
 std::string inString = "";
 unsigned int delayUs = 200;
 
+
+void RightWheelRisingIsr()
+{
+    RightWheel.RisingIsr();
+}
+
+void RightWheelFallingIsr()
+{
+    RightWheel.FallingIsr();
+}
+
+void LefttWheelRisingIsr()
+{
+    LeftWheel.RisingIsr();
+}
+
+void LefttWheelFallingIsr()
+{
+    LeftWheel.FallingIsr();
+}
+
 void setup()
 {
+    pinMode(RightWheelInterruptPin, INPUT_PULLUP);
+    pinMode(RightWheelDirectionPin, INPUT_PULLUP);
+    pinMode(LeftWheelInterruptPin, INPUT_PULLUP);
+    pinMode(LeftWheelDirectionPin, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(RightWheelInterruptPin), RightWheelRisingIsr, RISING);
+    attachInterrupt(digitalPinToInterrupt(RightWheelDirectionPin), RightWheelFallingIsr, FALLING);
+    attachInterrupt(digitalPinToInterrupt(LeftWheelInterruptPin), LefttWheelRisingIsr, RISING);
+    attachInterrupt(digitalPinToInterrupt(LeftWheelDirectionPin), LefttWheelFallingIsr, FALLING);
     Serial.begin(9600);
     Wire.begin();
 }
 
 static signed short spWhl = 0;
 static signed short spWhr = 0;
-
+static int rpmWhl = 0;
+static int rpmWhr = 0;
 bool HandleCommand(wheelCommandType cmd)
 {
     if(cmd.valid == true)
@@ -100,5 +135,11 @@ void loop()
     }
     RightWheel.SetSpeed(spWhr);
     LeftWheel.SetSpeed(spWhl);
+    rpmWhr = RightWheel.GetRpm();
+    rpmWhl = LeftWheel.GetRpm();
+    Serial.write("r,");
+    Serial.println(rpmWhr);
+    Serial.write("l,");
+    Serial.println(rpmWhl);
     delayMicroseconds(delayUs);
 }
