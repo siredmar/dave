@@ -6,7 +6,8 @@ typedef enum
     LEFT = 0,
     RIGHT,
     BOTH,
-    NONE
+    NONE,
+    HELP
 } wheelType;
 
 typedef struct

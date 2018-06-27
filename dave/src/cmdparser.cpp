@@ -44,6 +44,10 @@ wheelCommandType parse(const std::string &s)
                 {
                     ret.wheel = NONE;
                 }
+                else if(s == "h")
+                {
+                    ret.wheel = HELP;
+                }
                 else
                 {
                     ret.valid = false;

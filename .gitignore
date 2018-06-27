@@ -53,3 +53,5 @@ dkms.conf
 dave/.vscode/launch.json
 
 dave/\.vscode/extensions\.json
+
+dave/\.vscode/

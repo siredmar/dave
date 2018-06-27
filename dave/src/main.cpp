@@ -1,3 +1,4 @@
+
 /* Copyright (C) 2017 Armin Schlegel. All rights reserved.
 
 This software may be distributed and modified under the terms of the GNU
@@ -24,40 +25,64 @@ unsigned int delayUs = 200;
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(9600);
     Wire.begin();
 }
+
+static signed short spWhl = 0;
+static signed short spWhr = 0;
 
 bool HandleCommand(wheelCommandType cmd)
 {
     if(cmd.valid == true)
     {
+        Serial.println("Command Accepted\n");
         if(cmd.wheel == LEFT)
         {
-            LeftWheel.SetSpeed(cmd.speed);
+            spWhl = cmd.speed;
+            Serial.println("ACK");
         }
         else if(cmd.wheel == RIGHT)
         {
-            RightWheel.SetSpeed(cmd.speed);
+            spWhr = cmd.speed;
+            Serial.println("ACK");
         }
         else if(cmd.wheel == BOTH)
         {
-            RightWheel.SetSpeed(cmd.speed);
-            LeftWheel.SetSpeed(cmd.speed);
+            spWhr = cmd.speed;
+            spWhl = cmd.speed;
+            Serial.println("ACK");
         }
         else if(cmd.wheel == NONE)
         {
-            RightWheel.SetSpeed(0);
-            LeftWheel.SetSpeed(0);
+            spWhr = 0;
+            spWhl = 0;
+            Serial.println("ACK");
+        } 
+        if(cmd.wheel == HELP)
+        {
+            Serial.println("Help:");
+            Serial.println("Each command must be terminated by lf");
+            Serial.println("If command has been understood ACK is sent");
+            Serial.println("If command has not been understood NACK is sent");
+            Serial.println("Available commands:");
+            Serial.println("l,## -> Left wheel speed ## (+/-)");
+            Serial.println("r,## -> Right wheel speed ## (+/-)");
+            Serial.println("b,## -> Both wheels speed ## (+/-)");
+            Serial.println("s -> Both wheels stop");
         }
+        else
+        {
+            cmd.valid = false;
+            Serial.println("NACK");
+        }
+
     }
     return cmd.valid;
 }
 
 void loop()
 {
-    static signed short spWhl = 0;
-    static signed short spWhr = 0;
     if(Serial.available())
     {
         int inChar = Serial.read();
@@ -73,5 +98,7 @@ void loop()
         }
 
     }
+    RightWheel.SetSpeed(spWhr);
+    LeftWheel.SetSpeed(spWhl);
     delayMicroseconds(delayUs);
 }
