@@ -15,6 +15,7 @@ Wheel::Wheel(SoftwareSerial9 *serial, uint32_t Baud, bool inv, int directionPin)
     }
     mySerial->begin(Baudrate);
     this->directionPin = directionPin;
+    currentTime = 0;
 }
 
 Wheel::~Wheel(){ }
@@ -44,6 +45,8 @@ void Wheel::DecreaseSpeed(int delta)
 
 void Wheel::SendSpeedOverUart(int16_t sp)
 {
+    if(sp > 600)
+        sp = 600;
     sp *= inverted;
     mySerial->write9(256);
     mySerial->write9(sp & 0xFF);
@@ -55,7 +58,7 @@ void Wheel::SendSpeedOverUart(int16_t sp)
     mySerial->write9(82);
 }
 
-int Wheel::GetRpm()
+long Wheel::GetRpm()
 {
     return currentRpm;
 }
@@ -63,25 +66,53 @@ int Wheel::GetRpm()
 void Wheel::RisingIsr()
 {
     timeOld = micros();
-    if(digitalRead(directionPin))
-    {
-        direction = FORWARD;
-    }
-    else
-    {
-        direction = BACKWARD;
-    }
 }
 
 void Wheel::FallingIsr()
 {
-    pulsewidth = micros() - timeOld;
+    if((micros() - timeOld) > 100)
+    {
+        pulsewidth = micros() - timeOld;
+        if(digitalRead(directionPin))
+        {
+            direction = Direction::FORWARD;
+        }
+        else
+        {
+            direction = Direction::BACKWARD;
+        }
+        CalculateRpm();
+    }
+    
 }
 
-int Wheel::CalculateRpm()
+long Wheel::CalculateRpm()
 {
-    currentRpm = pulsewidth;
-    if(direction == BACKWARD)
+    // http://www.xuru.org/rt/PR.asp#Manually
+    /*
+        Time  SetValue
+        10000 500 
+        13000 400 
+        14900 350 
+        18000 300 
+        22000 250 
+        29500 200 
+        35000 175 
+        44000 150 
+        58000 125 
+        77500 100 
+        16400 75 
+    */
+    // y = 1.607826538·10-25 x6 - 4.242648736·10-20 x5 + 4.526767364·10-15 x4 - 2.526320447·10-10 x3 + 7.942832572·10-6 x2 - 1.400295492·10-1 x + 1317.549516
+    float p = (double)pulsewidth;
+    currentRpm = 1.607826538e-25 * (p*p*p*p*p*p) 
+    - 4.242648736e-20 * (p*p*p*p*p)
+    + 4.526767364e-15 * (p*p*p*p)
+    - 2.526320447e-10 * (p*p*p)
+    + 7.942832572e-6 * (p*p)
+    - 1.400295492e-1 * p
+    + 1317.549516;
+    if(direction == Direction::BACKWARD)
     {
         currentRpm *= -1;
     }

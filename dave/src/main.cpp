@@ -1,13 +1,13 @@
 
-/* Copyright (C) 2017 Armin Schlegel. All rights reserved.
+// /* Copyright (C) 2017 Armin Schlegel. All rights reserved.
 
-This software may be distributed and modified under the terms of the GNU
-General Public License version 2 (GPL2) as published by the Free Software
-Foundation and appearing in the file GPL2.TXT included in the packaging of
-this file. Please note that GPL2 Section 2[b] requires that all works based
-on this software must also be made publicly available under the terms of
-the GPL2 ("Copyleft").
-*/
+// This software may be distributed and modified under the terms of the GNU
+// General Public License version 2 (GPL2) as published by the Free Software
+// Foundation and appearing in the file GPL2.TXT included in the packaging of
+// this file. Please note that GPL2 Section 2[b] requires that all works based
+// on this software must also be made publicly available under the terms of
+// the GPL2 ("Copyleft").
+// */
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -15,10 +15,10 @@ the GPL2 ("Copyleft").
 #include "Wheel.h"
 #include "cmdparser.h"
 
-int RightWheelInterruptPin = 1;
-int RightWheelDirectionPin = 2;
-int LeftWheelInterruptPin = 3;
-int LeftWheelDirectionPin = 4;
+int RightWheelInterruptPin = 2;
+int RightWheelDirectionPin = 3;
+int LeftWheelInterruptPin = 4;
+int LeftWheelDirectionPin = 5;
 
 SoftwareSerial9 RightWheelSerial(9, 11);
 SoftwareSerial9 LeftWheelSerial(8, 10);
@@ -28,38 +28,43 @@ Wheel LeftWheel(&LeftWheelSerial, 31847, false, LeftWheelDirectionPin);
 std::string inString = "";
 unsigned int delayUs = 200;
 
+void RightWheelRisingIsr();
+void RightWheelFallingIsr();
+void LeftWheelRisingIsr();
+void LeftWheelFallingIsr();
 
 void RightWheelRisingIsr()
 {
+    attachInterrupt(digitalPinToInterrupt(RightWheelInterruptPin), RightWheelFallingIsr, FALLING);
     RightWheel.RisingIsr();
 }
 
 void RightWheelFallingIsr()
 {
+    attachInterrupt(digitalPinToInterrupt(RightWheelInterruptPin), RightWheelRisingIsr, RISING);
     RightWheel.FallingIsr();
 }
 
-void LefttWheelRisingIsr()
+void LeftWheelRisingIsr()
 {
+    attachInterrupt(digitalPinToInterrupt(RightWheelInterruptPin), LeftWheelFallingIsr, FALLING);
     LeftWheel.RisingIsr();
 }
-
-void LefttWheelFallingIsr()
+void LeftWheelFallingIsr()
 {
+    attachInterrupt(digitalPinToInterrupt(RightWheelInterruptPin), LeftWheelRisingIsr, RISING);
     LeftWheel.FallingIsr();
 }
 
 void setup()
 {
-    pinMode(RightWheelInterruptPin, INPUT_PULLUP);
-    pinMode(RightWheelDirectionPin, INPUT_PULLUP);
-    pinMode(LeftWheelInterruptPin, INPUT_PULLUP);
-    pinMode(LeftWheelDirectionPin, INPUT_PULLUP);
+    pinMode(RightWheelInterruptPin, INPUT);
+    pinMode(RightWheelDirectionPin, INPUT);
+    pinMode(LeftWheelInterruptPin, INPUT);
+    pinMode(LeftWheelDirectionPin, INPUT);
     attachInterrupt(digitalPinToInterrupt(RightWheelInterruptPin), RightWheelRisingIsr, RISING);
-    attachInterrupt(digitalPinToInterrupt(RightWheelDirectionPin), RightWheelFallingIsr, FALLING);
-    attachInterrupt(digitalPinToInterrupt(LeftWheelInterruptPin), LefttWheelRisingIsr, RISING);
-    attachInterrupt(digitalPinToInterrupt(LeftWheelDirectionPin), LefttWheelFallingIsr, FALLING);
-    Serial.begin(9600);
+    attachInterrupt(digitalPinToInterrupt(LeftWheelInterruptPin), LeftWheelRisingIsr, RISING);
+    Serial.begin(115200);
     Wire.begin();
 }
 
@@ -71,7 +76,6 @@ bool HandleCommand(wheelCommandType cmd)
 {
     if(cmd.valid == true)
     {
-        Serial.println("Command Accepted\n");
         if(cmd.wheel == LEFT)
         {
             spWhl = cmd.speed;
@@ -109,7 +113,6 @@ bool HandleCommand(wheelCommandType cmd)
         else
         {
             cmd.valid = false;
-            Serial.println("NACK");
         }
 
     }
@@ -131,15 +134,16 @@ void loop()
             HandleCommand(parse(inString));
             inString = "";
         }
-
     }
     RightWheel.SetSpeed(spWhr);
     LeftWheel.SetSpeed(spWhl);
     rpmWhr = RightWheel.GetRpm();
     rpmWhl = LeftWheel.GetRpm();
-    Serial.write("r,");
-    Serial.println(rpmWhr);
-    Serial.write("l,");
-    Serial.println(rpmWhl);
+    static long rightrpm = 0;
+    if(RightWheel.GetRpm() != rightrpm)
+    {
+        rightrpm = RightWheel.GetRpm();
+        Serial.println(rightrpm);
+    }
     delayMicroseconds(delayUs);
 }

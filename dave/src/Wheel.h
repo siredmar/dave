@@ -4,7 +4,7 @@
 class Wheel
 {
 public:
-    enum
+    enum class Direction
     {
         FORWARD = 0,
         BACKWARD
@@ -15,20 +15,23 @@ public:
     void Stop();
     void IncreaseSpeed(int delta);
     void DecreaseSpeed(int delta);
-    int GetRpm();
+    long GetRpm();
     void RisingIsr();
     void FallingIsr();
-    int CalculateRpm();
+    long CalculateRpm();
 private:
-    int direction;
     int16_t currentSpeed;
     bool inverted;
     uint32_t Baudrate;
     SoftwareSerial9 *mySerial;
     void SendSpeedOverUart(int16_t sp);
     int directionPin;
-    int pulsewidth;
-    uint32_t timeOld;
+    
+    volatile Direction direction;
     const double wheelDiameter = 25.0;
-    int currentRpm;
+    volatile long currentRpm;
+    volatile unsigned long currentTime;
+
+    volatile unsigned long pulsewidth;
+    volatile unsigned long timeOld;
 };
