@@ -1,10 +1,9 @@
 #include <Arduino.h>
 #include "Wheel.h"
 
-Wheel::Wheel(SoftwareSerial9 *serial, uint32_t Baud, bool inv, int directionPin)
+Wheel::Wheel(SoftwareSerial9 *serial, uint32_t Baud, bool inv, int directionPin, int16_t speedLimit, double wheelDiameter)
+: speedLimit(speedLimit), currentTime(0), directionPin(directionPin), Baudrate(Baud), mySerial(serial), wheelRadius(wheelDiameter/2)
 {
-    mySerial = serial;
-    Baudrate = Baud;
     if(inv == true)
     {
         inverted = -1;
@@ -14,11 +13,7 @@ Wheel::Wheel(SoftwareSerial9 *serial, uint32_t Baud, bool inv, int directionPin)
         inverted = 1;
     }
     mySerial->begin(Baudrate);
-    this->directionPin = directionPin;
-    currentTime = 0;
 }
-
-Wheel::~Wheel(){ }
 
 void Wheel::SetSpeed(int16_t sp)
 {
@@ -26,39 +21,52 @@ void Wheel::SetSpeed(int16_t sp)
     SendSpeedOverUart(currentSpeed);
 }
 
+void Wheel::SetMps(double ms)
+{
+    SetRpm(ms/(Pi_30 * wheelRadius));
+}
+
+double Wheel::GetMps()
+{
+    return (GetRpm() * Pi_30 * wheelRadius);
+}
+
 void Wheel::Stop()
 {
     SetSpeed(0);
 }
 
-void Wheel::IncreaseSpeed(int delta)
+void Wheel::SetRpm(double rpm)
 {
-    currentSpeed += delta;
-    SetSpeed(currentSpeed);
+    // Linear mapping from rpm to set value
+    /* used: http://polynomialregression.drque.net/online.php
+    RPM     Set Value
+    242.1	600
+    230.9	575
+    220.4	550
+    209.2	525
+    198.8	500
+    187.8	475
+    177.4	450
+    166.1	425
+    155.5	400
+    144.4	375
+    133.9	350
+    122.7	325
+    112.1	300
+    100.9	275
+    90.4	250
+    79.3	225
+    68.8	200
+    46.5	150
+    36	    125
+    26.7	100
+    13.4	75   */
+    int16_t newSpeed =  (int16_t)(2.306630778747887 * rpm + 41.718436623141145);
+    SetSpeed(newSpeed);
 }
 
-void Wheel::DecreaseSpeed(int delta)
-{
-    currentSpeed -= delta;
-    SetSpeed(currentSpeed);
-}
-
-void Wheel::SendSpeedOverUart(int16_t sp)
-{
-    if(sp > 600)
-        sp = 600;
-    sp *= inverted;
-    mySerial->write9(256);
-    mySerial->write9(sp & 0xFF);
-    mySerial->write9((sp >> 8) & 0xFF);
-    mySerial->write9(sp & 0xFF);
-    mySerial->write9((sp >> 8) & 0xFF);
-    mySerial->write9(85);
-    mySerial->write9(82);
-    mySerial->write9(82);
-}
-
-long Wheel::GetRpm()
+double Wheel::GetRpm()
 {
     return currentRpm;
 }
@@ -86,35 +94,53 @@ void Wheel::FallingIsr()
     
 }
 
-long Wheel::CalculateRpm()
+double Wheel::CalculateRpm()
 {
-    // http://www.xuru.org/rt/PR.asp#Manually
-    /*
-        Time  SetValue
-        10000 500 
-        13000 400 
-        14900 350 
-        18000 300 
-        22000 250 
-        29500 200 
-        35000 175 
-        44000 150 
-        58000 125 
-        77500 100 
-        16400 75 
-    */
-    // y = 1.607826538·10-25 x6 - 4.242648736·10-20 x5 + 4.526767364·10-15 x4 - 2.526320447·10-10 x3 + 7.942832572·10-6 x2 - 1.400295492·10-1 x + 1317.549516
-    float p = (double)pulsewidth;
-    currentRpm = 1.607826538e-25 * (p*p*p*p*p*p) 
-    - 4.242648736e-20 * (p*p*p*p*p)
-    + 4.526767364e-15 * (p*p*p*p)
-    - 2.526320447e-10 * (p*p*p)
-    + 7.942832572e-6 * (p*p)
-    - 1.400295492e-1 * p
-    + 1317.549516;
+    double p = (double)pulsewidth;
+    // Convert nonlinear pulsewidth to RPM
+    /* used: http://polynomialregression.drque.net/online.php
+    pulwewidth  RPM
+    8340    	242.1
+    8600	    230.9
+    9060	    220.4
+    9740	    209.2
+    10300	    198.8
+    10650	    187.8
+    11370	    177.4
+    12100	    166.1
+    13000	    155.5
+    14000	    144.4
+    15100	    133.9
+    16500	    122.7
+    18280	    112.1
+    20100	    100.9
+    22360	    90.4
+    25600	    79.3
+    29700	    68.8
+    45000	    46.5
+    58890	    36
+    79000	    26.7
+    165000  	13.4 */
+    currentRpm = 1546995.9100708 * pow(p,-0.97182638159083517718);
+
     if(direction == Direction::BACKWARD)
     {
-        currentRpm *= -1;
+        currentRpm *= -1.0;
     }
     return currentRpm;
+}
+
+void Wheel::SendSpeedOverUart(int16_t sp)
+{
+    if(sp > 600)
+        sp = 600;
+    sp *= inverted;
+    mySerial->write9(256);
+    mySerial->write9(sp & 0xFF);
+    mySerial->write9((sp >> 8) & 0xFF);
+    mySerial->write9(sp & 0xFF);
+    mySerial->write9((sp >> 8) & 0xFF);
+    mySerial->write9(85);
+    mySerial->write9(82);
+    mySerial->write9(82);
 }

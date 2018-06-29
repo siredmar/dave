@@ -12,8 +12,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <SoftwareSerial9.h>
+#include <Cmd.h>
 #include "Wheel.h"
-#include "cmdparser.h"
 
 int RightWheelInterruptPin = 2;
 int RightWheelDirectionPin = 3;
@@ -22,10 +22,9 @@ int LeftWheelDirectionPin = 5;
 
 SoftwareSerial9 RightWheelSerial(9, 11);
 SoftwareSerial9 LeftWheelSerial(8, 10);
-Wheel RightWheel(&RightWheelSerial, 31847, false, RightWheelDirectionPin);
-Wheel LeftWheel(&LeftWheelSerial, 31847, false, LeftWheelDirectionPin);
+Wheel RightWheel(&RightWheelSerial, 31847, false, RightWheelDirectionPin, 600, 0.17);
+Wheel LeftWheel(&LeftWheelSerial, 31847, false, LeftWheelDirectionPin, 600, 0.17);
 
-std::string inString = "";
 unsigned int delayUs = 200;
 
 void RightWheelRisingIsr();
@@ -56,6 +55,64 @@ void LeftWheelFallingIsr()
     LeftWheel.FallingIsr();
 }
 
+
+static double mpsl = 0.0;
+static double mpsr = 0.0;
+
+void LeftWheelCb(int arg_cnt, char **args)
+{
+    double mps;
+  
+    if (arg_cnt > 1)
+    {  
+        mps = cmdStr2double(args[1]);
+        mpsl = mps;
+    }
+    else
+    {
+        mpsl = 0.0;
+    }
+}
+
+void RightWheelCb(int arg_cnt, char **args)
+{
+    double mps;
+  
+    if (arg_cnt > 1)
+    {  
+        mps = cmdStr2double(args[1]);
+        mpsr = mps;
+    }
+    else
+    {
+        mpsr = 0.0;
+    }
+}
+
+void BothWheelsCb(int arg_cnt, char **args)
+{
+    double mps;
+  
+    if (arg_cnt > 1)
+    {  
+        mps = cmdStr2double(args[1]);
+        mpsl = mps;
+        mpsr = mps;
+        Serial.println(mps);
+    }
+    else
+    {
+        mpsr = 0.0;
+        mpsl = 0.0;
+    }
+}
+
+void StopCb(int arg_cnt, char **args)
+{
+    mpsr = 0.0;
+    mpsl = 0.0;
+}
+
 void setup()
 {
     pinMode(RightWheelInterruptPin, INPUT);
@@ -66,84 +123,32 @@ void setup()
     attachInterrupt(digitalPinToInterrupt(LeftWheelInterruptPin), LeftWheelRisingIsr, RISING);
     Serial.begin(115200);
     Wire.begin();
-}
-
-static signed short spWhl = 0;
-static signed short spWhr = 0;
-static int rpmWhl = 0;
-static int rpmWhr = 0;
-bool HandleCommand(wheelCommandType cmd)
-{
-    if(cmd.valid == true)
-    {
-        if(cmd.wheel == LEFT)
-        {
-            spWhl = cmd.speed;
-            Serial.println("ACK");
-        }
-        else if(cmd.wheel == RIGHT)
-        {
-            spWhr = cmd.speed;
-            Serial.println("ACK");
-        }
-        else if(cmd.wheel == BOTH)
-        {
-            spWhr = cmd.speed;
-            spWhl = cmd.speed;
-            Serial.println("ACK");
-        }
-        else if(cmd.wheel == NONE)
-        {
-            spWhr = 0;
-            spWhl = 0;
-            Serial.println("ACK");
-        } 
-        if(cmd.wheel == HELP)
-        {
-            Serial.println("Help:");
-            Serial.println("Each command must be terminated by lf");
-            Serial.println("If command has been understood ACK is sent");
-            Serial.println("If command has not been understood NACK is sent");
-            Serial.println("Available commands:");
-            Serial.println("l,## -> Left wheel speed ## (+/-)");
-            Serial.println("r,## -> Right wheel speed ## (+/-)");
-            Serial.println("b,## -> Both wheels speed ## (+/-)");
-            Serial.println("s -> Both wheels stop");
-        }
-        else
-        {
-            cmd.valid = false;
-        }
-
-    }
-    return cmd.valid;
+    cmdInit(&Serial);
+    cmdAdd("l", LeftWheelCb);
+    cmdAdd("r", RightWheelCb);
+    cmdAdd("b", BothWheelsCb);
+    cmdAdd("s", StopCb);
 }
 
 void loop()
 {
-    if(Serial.available())
+    cmdPoll();
+    RightWheel.SetMps(mpsr);
+    LeftWheel.SetMps(mpsl);
+    static double rightms = 0;
+    if(RightWheel.GetMps() != rightms)
     {
-        int inChar = Serial.read();
-
-        if (inChar != '\n')
-        {
-            inString += (char)inChar;
-        }
-        else
-        {
-            HandleCommand(parse(inString));
-            inString = "";
-        }
+        rightms = RightWheel.GetMps();
+        Serial.print("/Wheel/Right/Speed/");
+        Serial.println(rightms);
     }
-    RightWheel.SetSpeed(spWhr);
-    LeftWheel.SetSpeed(spWhl);
-    rpmWhr = RightWheel.GetRpm();
-    rpmWhl = LeftWheel.GetRpm();
-    static long rightrpm = 0;
-    if(RightWheel.GetRpm() != rightrpm)
+
+    static double leftms = 0;
+    if(LeftWheel.GetMps() != leftms)
     {
-        rightrpm = RightWheel.GetRpm();
-        Serial.println(rightrpm);
+        leftms = LeftWheel.GetMps();
+        Serial.print("/Wheel/Left/Speed/");
+        Serial.println(leftms);
     }
     delayMicroseconds(delayUs);
 }

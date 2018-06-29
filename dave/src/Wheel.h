@@ -9,17 +9,19 @@ public:
         FORWARD = 0,
         BACKWARD
     };
-    Wheel(SoftwareSerial9 *serial, uint32_t Baud, bool inv, int directionPin);
-    ~Wheel();
-    void SetSpeed(int16_t sp);
+    Wheel(SoftwareSerial9 *serial, uint32_t Baud, bool inv, int directionPin, int16_t speedLimit, double wheelDiameter = 0.17);
+    ~Wheel(){}
+    void SetRpm(double rpm);
+    double GetRpm();
+    void SetMps(double ms);
+    double GetMps();
     void Stop();
-    void IncreaseSpeed(int delta);
-    void DecreaseSpeed(int delta);
-    long GetRpm();
     void RisingIsr();
     void FallingIsr();
-    long CalculateRpm();
 private:
+    double CalculateRpm();
+    void SetSpeed(int16_t sp);
+    int16_t speedLimit;
     int16_t currentSpeed;
     bool inverted;
     uint32_t Baudrate;
@@ -28,10 +30,11 @@ private:
     int directionPin;
     
     volatile Direction direction;
-    const double wheelDiameter = 25.0;
-    volatile long currentRpm;
-    volatile unsigned long currentTime;
+    const double wheelRadius;
+    volatile double currentRpm;
 
+    volatile unsigned long currentTime;
     volatile unsigned long pulsewidth;
     volatile unsigned long timeOld;
+    const double Pi_30 = 0.10471975512;
 };
