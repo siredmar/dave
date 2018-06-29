@@ -16,8 +16,8 @@
 #include "Wheel.h"
 
 int RightWheelInterruptPin = 2;
-int RightWheelDirectionPin = 3;
-int LeftWheelInterruptPin = 4;
+int LeftWheelInterruptPin = 3;
+int RightWheelDirectionPin = 4;
 int LeftWheelDirectionPin = 5;
 
 SoftwareSerial9 RightWheelSerial(9, 11);
