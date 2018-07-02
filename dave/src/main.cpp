@@ -113,6 +113,17 @@ void StopCb(int arg_cnt, char **args)
     mpsl = 0.0;
 }
 
+void GetCb(int arg_cnt, char **args)
+{
+    double rightms = RightWheel.GetMps();
+    Serial.print("/Wheel/Right/Speed/");
+    Serial.println(rightms);
+
+    double leftms = LeftWheel.GetMps();
+    Serial.print("/Wheel/Left/Speed/");
+    Serial.println(leftms);
+}
+
 void setup()
 {
     pinMode(RightWheelInterruptPin, INPUT);
@@ -128,6 +139,7 @@ void setup()
     cmdAdd("r", RightWheelCb);
     cmdAdd("b", BothWheelsCb);
     cmdAdd("s", StopCb);
+    cmdAdd("getmotors", GetCb);
 }
 
 void loop()
@@ -135,20 +147,5 @@ void loop()
     cmdPoll();
     RightWheel.SetMps(mpsr);
     LeftWheel.SetMps(mpsl);
-    static double rightms = 0;
-    if(RightWheel.GetMps() != rightms)
-    {
-        rightms = RightWheel.GetMps();
-        Serial.print("/Wheel/Right/Speed/");
-        Serial.println(rightms);
-    }
-
-    static double leftms = 0;
-    if(LeftWheel.GetMps() != leftms)
-    {
-        leftms = LeftWheel.GetMps();
-        Serial.print("/Wheel/Left/Speed/");
-        Serial.println(leftms);
-    }
     delayMicroseconds(delayUs);
 }
