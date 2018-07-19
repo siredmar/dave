@@ -124,6 +124,17 @@ void GetCb(int arg_cnt, char **args)
     Serial.println(leftms);
 }
 
+void HelpCb(int arg_cnt, char **args)
+{
+    Serial.println("Available commands");
+    Serial.println("r #\t\tright wheel speed [m/s]");
+    Serial.println("l #\t\tleft wheel speed [m/s]");
+    Serial.println("b #\t\tboth wheels speed [m/s]");
+    Serial.println("s\t\tstop both wheels");
+    Serial.println("getmotors\tgets current motor speeds");
+    Serial.println("h\t\tget this help"); 
+}
+
 void setup()
 {
     pinMode(RightWheelInterruptPin, INPUT);
@@ -139,6 +150,7 @@ void setup()
     cmdAdd("r", RightWheelCb);
     cmdAdd("b", BothWheelsCb);
     cmdAdd("s", StopCb);
+    cmdAdd("h", HelpCb);
     cmdAdd("getmotors", GetCb);
 }
 
