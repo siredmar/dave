@@ -32,9 +32,10 @@ private:
     volatile Direction direction;
     const double wheelRadius;
     volatile double currentRpm;
-
-    volatile unsigned long currentTime;
+    volatile unsigned long timeRising;
+    volatile unsigned long timeFalling;
+    volatile unsigned long timeRisingTmp;
+    volatile unsigned long timeFallingTmp;
     volatile unsigned long pulsewidth;
-    volatile unsigned long timeOld;
     const double Pi_30 = 0.10471975512;
 };

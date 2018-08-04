@@ -1,3 +1,6 @@
 [submodule "dave/lib/SoftwareSerial9"]
 	path = dave/lib/SoftwareSerial9
 	url = https://github.com/siredmar/SoftwareSerial9.git
+[submodule "dave/lib/CmdArduino"]
+	path = dave/lib/CmdArduino
+	url = https://github.com/siredmar/CmdArduino.git

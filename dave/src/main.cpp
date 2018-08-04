@@ -46,12 +46,12 @@ void RightWheelFallingIsr()
 
 void LeftWheelRisingIsr()
 {
-    attachInterrupt(digitalPinToInterrupt(RightWheelInterruptPin), LeftWheelFallingIsr, FALLING);
+    attachInterrupt(digitalPinToInterrupt(LeftWheelInterruptPin), LeftWheelFallingIsr, FALLING);
     LeftWheel.RisingIsr();
 }
 void LeftWheelFallingIsr()
 {
-    attachInterrupt(digitalPinToInterrupt(RightWheelInterruptPin), LeftWheelRisingIsr, RISING);
+    attachInterrupt(digitalPinToInterrupt(LeftWheelInterruptPin), LeftWheelRisingIsr, RISING);
     LeftWheel.FallingIsr();
 }
 
