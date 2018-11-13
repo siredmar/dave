@@ -9,10 +9,44 @@ public:
         FORWARD = 0,
         BACKWARD
     };
-    Wheel(SoftwareSerial9* serial, uint32_t Baud, bool inv, int directionPin, int16_t speedLimit, double wheelDiameter = 0.17);
+
+    struct DirectionConfig
+    {
+        DirectionConfig(double RpmToSetCoeff, double RpmToSetOffset, double PulseWidthToRpmCoeff, double PulseWidthToRpmFactor)
+            : RpmToSetCoeff(RpmToSetCoeff)
+            , RpmToSetOffset(RpmToSetOffset)
+            , PulseWidthToRpmCoeff(PulseWidthToRpmCoeff)
+            , PulseWidthToRpmFactor(PulseWidthToRpmFactor)
+        {
+        }
+        double RpmToSetCoeff;
+        double RpmToSetOffset;
+        double PulseWidthToRpmCoeff;
+        double PulseWidthToRpmFactor;
+    };
+
+    struct WheelConfig
+    {
+        WheelConfig(const DirectionConfig& forward, const DirectionConfig& backward, Direction WheelDirection, int16_t speedLimit, double wheelDiameter)
+            : forward(forward)
+            , backward(backward)
+            , WheelDirection(WheelDirection)
+            , speedLimit(speedLimit)
+            , wheelDiameter(wheelDiameter)
+        {
+        }
+        DirectionConfig forward;
+        DirectionConfig backward;
+        Direction WheelDirection;
+        int16_t speedLimit;
+        double wheelDiameter;
+    };
+
+    Wheel(SoftwareSerial9* serial, uint32_t Baud, int directionPin, const WheelConfig& config);
     ~Wheel()
     {
     }
+
     void SetRpm(double rpm);
     double GetRpm();
     void SetMps(double ms);
@@ -23,18 +57,18 @@ public:
     void SetSpeed(int16_t sp);
 
 private:
-    double CalculateRpm();
-    int16_t speedLimit;
-    int16_t currentSpeed;
-    bool inverted;
-    uint32_t Baudrate;
     SoftwareSerial9* mySerial;
-    void SendSpeedOverUart(int16_t sp);
+    uint32_t Baudrate;
     int directionPin;
+    WheelConfig config;
 
-    volatile Direction direction;
-    const double wheelRadius;
+    double CalculateRpm();
+    void SendSpeedOverUart(int16_t sp);
+
     volatile double currentRpm;
+    int16_t currentSpeed;
+    Direction direction;
+
     volatile unsigned long timeRising;
     volatile unsigned long timeFalling;
     volatile unsigned long timeRisingTmp;

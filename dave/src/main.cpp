@@ -22,8 +22,17 @@ int LeftWheelDirectionPin = 5;
 
 SoftwareSerial9 RightWheelSerial(9, 11);
 SoftwareSerial9 LeftWheelSerial(8, 10);
-Wheel RightWheel(&RightWheelSerial, 31847, false, RightWheelDirectionPin, 600, 0.17);
-Wheel LeftWheel(&LeftWheelSerial, 31847, false, LeftWheelDirectionPin, 600, 0.17);
+
+Wheel::DirectionConfig RightForwardConfig(2.306630778747887, 41.718436623141145, 1546995.9100708, -0.97182638159083517718);
+Wheel::DirectionConfig RightBackwardConfig(2.306630778747887, 41.718436623141145, 1546995.9100708, -0.97182638159083517718);
+Wheel::DirectionConfig LeftForwardConfig(2.306630778747887, 41.718436623141145, 1546995.9100708, -0.97182638159083517718);
+Wheel::DirectionConfig LeftBackwardConfig(2.306630778747887, 41.718436623141145, 1546995.9100708, -0.97182638159083517718);
+
+Wheel::WheelConfig RightWheelConfig(RightForwardConfig, RightBackwardConfig, Wheel::Direction::FORWARD, 600, 0.17);
+Wheel::WheelConfig LeftWheelConfig(LeftForwardConfig, LeftBackwardConfig, Wheel::Direction::FORWARD, 600, 0.17);
+
+Wheel RightWheel(&RightWheelSerial, 31847, RightWheelDirectionPin, RightWheelConfig);
+Wheel LeftWheel(&LeftWheelSerial, 31847, LeftWheelDirectionPin, LeftWheelConfig);
 
 unsigned int delayUs = 200;
 
