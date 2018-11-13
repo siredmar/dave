@@ -1,14 +1,14 @@
-#include <Arduino.h>
 #include "Wheel.h"
+#include <Arduino.h>
 
-Wheel::Wheel(SoftwareSerial9 *serial, uint32_t Baud, bool inv, int directionPin, int16_t speedLimit, double wheelDiameter)
-:   speedLimit(speedLimit), 
-    directionPin(directionPin), 
-    Baudrate(Baud), 
-    mySerial(serial), 
-    wheelRadius(wheelDiameter/2)
+Wheel::Wheel(SoftwareSerial9* serial, uint32_t Baud, bool inv, int directionPin, int16_t speedLimit, double wheelDiameter)
+    : speedLimit(speedLimit)
+    , directionPin(directionPin)
+    , Baudrate(Baud)
+    , mySerial(serial)
+    , wheelRadius(wheelDiameter / 2)
 {
-    if(inv == true)
+    if (inv == true)
     {
         inverted = -1;
     }
@@ -27,7 +27,7 @@ void Wheel::SetSpeed(int16_t sp)
 
 void Wheel::SetMps(double ms)
 {
-    SetRpm(ms/(Pi_30 * wheelRadius));
+    SetRpm(ms / (Pi_30 * wheelRadius));
 }
 
 double Wheel::GetMps()
@@ -53,10 +53,10 @@ void Wheel::RisingIsr()
 void Wheel::FallingIsr()
 {
     unsigned long currentTime = micros();
-    if((currentTime - timeRisingTmp) > 200)
+    if ((currentTime - timeRisingTmp) > 200)
     {
         timeFallingTmp = currentTime;
-        if(digitalRead(directionPin))
+        if (digitalRead(directionPin))
         {
             direction = Direction::FORWARD;
         }
@@ -102,9 +102,9 @@ double Wheel::CalculateRpm()
     58890	    36
     79000	    26.7
     165000  	13.4 */
-    rpm = 1546995.9100708 * pow(p,-0.97182638159083517718);
+    rpm = 1546995.9100708 * pow(p, -0.97182638159083517718);
 
-    if(direction == Direction::BACKWARD)
+    if (direction == Direction::BACKWARD)
     {
         rpm *= -1.0;
     }
@@ -114,7 +114,7 @@ double Wheel::CalculateRpm()
 
 void Wheel::SendSpeedOverUart(int16_t sp)
 {
-    if(sp > 600)
+    if (sp > 600)
         sp = 600;
     sp *= inverted;
     mySerial->write9(256);
@@ -126,7 +126,6 @@ void Wheel::SendSpeedOverUart(int16_t sp)
     mySerial->write9(82);
     mySerial->write9(82);
 }
-
 
 void Wheel::SetRpm(double rpm)
 {
@@ -154,6 +153,6 @@ void Wheel::SetRpm(double rpm)
     36	    125
     26.7	100
     13.4	75   */
-    int16_t newSpeed =  (int16_t)(2.306630778747887 * rpm + 41.718436623141145);
+    int16_t newSpeed = (int16_t)(2.306630778747887 * rpm + 41.718436623141145);
     SetSpeed(newSpeed);
 }

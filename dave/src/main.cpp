@@ -9,11 +9,11 @@
 // the GPL2 ("Copyleft").
 // */
 
-#include <Arduino.h>
-#include <Wire.h>
-#include <SoftwareSerial9.h>
-#include <Cmd.h>
 #include "Wheel.h"
+#include <Arduino.h>
+#include <Cmd.h>
+#include <SoftwareSerial9.h>
+#include <Wire.h>
 
 int RightWheelInterruptPin = 2;
 int LeftWheelInterruptPin = 3;
@@ -55,16 +55,15 @@ void LeftWheelFallingIsr()
     LeftWheel.FallingIsr();
 }
 
-
 static double mpsl = 0.0;
 static double mpsr = 0.0;
 
-void LeftWheelCb(int arg_cnt, char **args)
+void LeftWheelCb(int arg_cnt, char** args)
 {
     double mps;
-  
+
     if (arg_cnt > 1)
-    {  
+    {
         mps = cmdStr2double(args[1]);
         mpsl = mps;
     }
@@ -74,12 +73,12 @@ void LeftWheelCb(int arg_cnt, char **args)
     }
 }
 
-void RightWheelCb(int arg_cnt, char **args)
+void RightWheelCb(int arg_cnt, char** args)
 {
     double mps;
-  
+
     if (arg_cnt > 1)
-    {  
+    {
         mps = cmdStr2double(args[1]);
         mpsr = mps;
     }
@@ -89,12 +88,12 @@ void RightWheelCb(int arg_cnt, char **args)
     }
 }
 
-void BothWheelsCb(int arg_cnt, char **args)
+void BothWheelsCb(int arg_cnt, char** args)
 {
     double mps;
-  
+
     if (arg_cnt > 1)
-    {  
+    {
         mps = cmdStr2double(args[1]);
         mpsl = mps;
         mpsr = mps;
@@ -107,13 +106,13 @@ void BothWheelsCb(int arg_cnt, char **args)
     }
 }
 
-void StopCb(int arg_cnt, char **args)
+void StopCb(int arg_cnt, char** args)
 {
     mpsr = 0.0;
     mpsl = 0.0;
 }
 
-void GetCb(int arg_cnt, char **args)
+void GetCb(int arg_cnt, char** args)
 {
     double rightms = RightWheel.GetMps();
     Serial.print("/Wheel/Right/Speed/");
@@ -124,7 +123,7 @@ void GetCb(int arg_cnt, char **args)
     Serial.println(leftms);
 }
 
-void HelpCb(int arg_cnt, char **args)
+void HelpCb(int arg_cnt, char** args)
 {
     Serial.println("Available commands");
     Serial.println("r #\t\tright wheel speed [m/s]");
@@ -132,7 +131,7 @@ void HelpCb(int arg_cnt, char **args)
     Serial.println("b #\t\tboth wheels speed [m/s]");
     Serial.println("s\t\tstop both wheels");
     Serial.println("getmotors\tgets current motor speeds");
-    Serial.println("h\t\tget this help"); 
+    Serial.println("h\t\tget this help");
 }
 
 void setup()
@@ -157,6 +156,9 @@ void setup()
 void loop()
 {
     cmdPoll();
+
+    // To calibrate use RightWheel.SetSpeed(mpsr); and LeftWheel.SetSpeed(mpsl);
+
     RightWheel.SetMps(mpsr);
     LeftWheel.SetMps(mpsl);
     delayMicroseconds(delayUs);
