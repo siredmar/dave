@@ -67,6 +67,26 @@ void LeftWheelFallingIsr()
 static double mpsl = 0.0;
 static double mpsr = 0.0;
 
+void SetRight(double val)
+{
+    mpsr = val;
+    double p = CalculatePulsewidth(mpsr);
+    Serial.print("Right RPM: ");
+    Serial.print(mpsr);
+    Serial.print(", pulse: ");
+    Serial.println(p);
+}
+
+void SetLeft(double val)
+{
+    mpsl = val;
+    double p = CalculatePulsewidth(mpsr);
+    Serial.print("Left RPM: ");
+    Serial.print(mpsr);
+    Serial.print(", pulse: ");
+    Serial.println(p);
+}
+
 void LeftWheelCb(int arg_cnt, char** args)
 {
     double mps;
@@ -74,11 +94,12 @@ void LeftWheelCb(int arg_cnt, char** args)
     if (arg_cnt > 1)
     {
         mps = cmdStr2double(args[1]);
+        SetLeft(mps);
         mpsl = mps;
     }
     else
     {
-        mpsl = 0.0;
+        SetLeft(0.0);
     }
 }
 
@@ -89,11 +110,11 @@ void RightWheelCb(int arg_cnt, char** args)
     if (arg_cnt > 1)
     {
         mps = cmdStr2double(args[1]);
-        mpsr = mps;
+        SetRight(mps);
     }
     else
     {
-        mpsr = 0.0;
+        SetRight(0.0);
     }
 }
 
@@ -104,14 +125,14 @@ void BothWheelsCb(int arg_cnt, char** args)
     if (arg_cnt > 1)
     {
         mps = cmdStr2double(args[1]);
-        mpsl = mps;
-        mpsr = mps;
+        SetRight(mps);
+        SetLeft(mps);
         Serial.println(mps);
     }
     else
     {
-        mpsr = 0.0;
-        mpsl = 0.0;
+        SetRight(0.0);
+        SetLeft(0.0);
     }
 }
 
@@ -165,9 +186,12 @@ void setup()
 void loop()
 {
     cmdPoll();
-
-    RightWheel.SetSpeed(mpsr);
-    LeftWheel.SetSpeed(mpsl);
+    // RightWheel.SetNewSetpoint(mpsr);
+    // RightWheel.Calculate();
+    // LeftWheel.SetNewSetpoint(mpsl);
+    // LeftWheel.Calculate();
+    // RightWheel.SetSpeed(mpsr);
+    // LeftWheel.SetSpeed(mpsl);
     // RightWheel.SetMps(mpsr);
     // LeftWheel.SetMps(mpsl);
     delayMicroseconds(delayUs);

@@ -1,4 +1,5 @@
 
+#include <PID_v1.h>
 #include <SoftwareSerial9.h>
 
 class Wheel
@@ -47,14 +48,18 @@ public:
     {
     }
 
-    void SetRpm(double rpm);
-    double GetRpm();
-    void SetMps(double ms);
-    double GetMps();
-    void Stop();
+    // void SetRpm(double rpm);
+    // double GetRpm();
+    // void SetMps(double ms);
+    // double GetMps();
+    // void Stop();
     void RisingIsr();
     void FallingIsr();
-    void SetSpeed(int16_t sp);
+    // void SetSpeed(int16_t sp);
+    void SetNewSetpoint(double set);
+    double Calculate();
+
+    double CalculatePulsewidth(double rpm);
 
 private:
     SoftwareSerial9* mySerial;
@@ -62,7 +67,7 @@ private:
     int directionPin;
     WheelConfig config;
 
-    double CalculateRpm();
+    // double CalculateRpm();
     void SendSpeedOverUart(int16_t sp);
 
     volatile double currentRpm;
@@ -75,4 +80,8 @@ private:
     volatile unsigned long timeFallingTmp;
     volatile unsigned long pulsewidth;
     const double Pi_30 = 3.10471975512;
+
+    double Setpoint, Input, Output;
+    double consKp = 1, consKi = 0, consKd = 0;
+    PID* myPID;
 };
