@@ -4,3 +4,6 @@
 [submodule "dave/lib/CmdArduino"]
 	path = dave/lib/CmdArduino
 	url = https://github.com/siredmar/CmdArduino.git
+[submodule "MovingAverage"]
+	path = dave/lib/MovingAverage
+	url = https://github.com/pilotak/MovingAverage.git
