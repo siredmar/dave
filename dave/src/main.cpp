@@ -34,7 +34,7 @@ Wheel::WheelConfig LeftWheelConfig(LeftForwardConfig, LeftBackwardConfig, Wheel:
 Wheel RightWheel(&RightWheelSerial, 31847, RightWheelDirectionPin, RightWheelConfig);
 Wheel LeftWheel(&LeftWheelSerial, 31847, LeftWheelDirectionPin, LeftWheelConfig);
 
-unsigned int delayUs = 200;
+unsigned int delayUs = 500;
 
 void RightWheelRisingIsr();
 void RightWheelFallingIsr();
@@ -70,21 +70,15 @@ static double mpsr = 0.0;
 void SetRight(double val)
 {
     mpsr = val;
-    double p = CalculatePulsewidth(mpsr);
     Serial.print("Right RPM: ");
     Serial.print(mpsr);
-    Serial.print(", pulse: ");
-    Serial.println(p);
 }
 
 void SetLeft(double val)
 {
     mpsl = val;
-    double p = CalculatePulsewidth(mpsr);
     Serial.print("Left RPM: ");
     Serial.print(mpsr);
-    Serial.print(", pulse: ");
-    Serial.println(p);
 }
 
 void LeftWheelCb(int arg_cnt, char** args)
@@ -144,13 +138,21 @@ void StopCb(int arg_cnt, char** args)
 
 void GetCb(int arg_cnt, char** args)
 {
-    double rightms = RightWheel.GetMps();
+    double rightms = RightWheel.GetRpm();
     Serial.print("/Wheel/Right/Speed/");
     Serial.println(rightms);
 
-    double leftms = LeftWheel.GetMps();
+    double leftms = LeftWheel.GetRpm();
     Serial.print("/Wheel/Left/Speed/");
     Serial.println(leftms);
+}
+
+void InfoCb(int arg_cnt, char** args)
+{
+    Serial.print("Right pulseWidth: ");
+    Serial.println(RightWheel.GetPulseWidth());
+    Serial.print("Left pulseWidth: ");
+    Serial.println(LeftWheel.GetPulseWidth());
 }
 
 void HelpCb(int arg_cnt, char** args)
@@ -180,19 +182,19 @@ void setup()
     cmdAdd("b", BothWheelsCb);
     cmdAdd("s", StopCb);
     cmdAdd("h", HelpCb);
-    cmdAdd("getmotors", GetCb);
+    // cmdAdd("getmotors", GetCb);
+    cmdAdd("g", GetCb);
+    cmdAdd("i", InfoCb);
 }
 
 void loop()
 {
     cmdPoll();
-    // RightWheel.SetNewSetpoint(mpsr);
-    // RightWheel.Calculate();
-    // LeftWheel.SetNewSetpoint(mpsl);
-    // LeftWheel.Calculate();
-    // RightWheel.SetSpeed(mpsr);
-    // LeftWheel.SetSpeed(mpsl);
-    // RightWheel.SetMps(mpsr);
-    // LeftWheel.SetMps(mpsl);
+    // RightWheel.SendSpeedOverUart((int16_t)mpsr);
+    // LeftWheel.SendSpeedOverUart((int16_t)mpsl);
+    RightWheel.SetNewSetpoint(mpsr);
+    RightWheel.Calculate();
+    LeftWheel.SetNewSetpoint(mpsl);
+    LeftWheel.Calculate();
     delayMicroseconds(delayUs);
 }

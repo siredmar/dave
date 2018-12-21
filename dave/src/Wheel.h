@@ -1,6 +1,8 @@
 
+#include "MovingAverage.h"
 #include <PID_v1.h>
 #include <SoftwareSerial9.h>
+#include <inttypes.h>
 
 class Wheel
 {
@@ -48,40 +50,36 @@ public:
     {
     }
 
-    // void SetRpm(double rpm);
-    // double GetRpm();
-    // void SetMps(double ms);
-    // double GetMps();
-    // void Stop();
     void RisingIsr();
     void FallingIsr();
-    // void SetSpeed(int16_t sp);
     void SetNewSetpoint(double set);
     double Calculate();
-
-    double CalculatePulsewidth(double rpm);
+    double GetRpm();
+    double GetPulseWidth();
+    void SendSpeedOverUart(int16_t sp);
 
 private:
+    bool risingIsrAllowed = { true };
     SoftwareSerial9* mySerial;
     uint32_t Baudrate;
     int directionPin;
     WheelConfig config;
 
-    // double CalculateRpm();
-    void SendSpeedOverUart(int16_t sp);
+    double CalculateRpm();
+    double MovingAveragePulseWidth(double value);
 
     volatile double currentRpm;
-    int16_t currentSpeed;
     Direction direction;
 
     volatile unsigned long timeRising;
     volatile unsigned long timeFalling;
     volatile unsigned long timeRisingTmp;
     volatile unsigned long timeFallingTmp;
-    volatile unsigned long pulsewidth;
+    volatile double pulseWidth;
     const double Pi_30 = 3.10471975512;
 
     double Setpoint, Input, Output;
-    double consKp = 1, consKi = 0, consKd = 0;
+    double consKp = 0.05, consKi = 0.005, consKd = 0;
     PID* myPID;
+    volatile MovingAverage<double, 12> filter;
 };
